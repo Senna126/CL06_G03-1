@@ -1,8 +1,10 @@
 import os
 import json
-import pandas as pd 
-from sklearn.preprocessing import LableEncoder, StandardScaler
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 import joblib
+
 
 DATA_PATH = "data/obesity_data.csv"
 ARTIFACT_DATA_DIR = "artifacts/data"
@@ -11,10 +13,12 @@ METRICS_DIR = "artifacts/metrics"
 
 TARGET_COLUMN = "NObeyesdad"
 
+
 def create_directories():
     os.makedirs(ARTIFACT_DATA_DIR, exist_ok=True)
     os.makedirs(ARTIFACT_PREPROCESSING_DIR, exist_ok=True)
     os.makedirs(METRICS_DIR, exist_ok=True)
+
 
 def load_dataset():
     if not os.path.exists(DATA_PATH):
@@ -22,13 +26,14 @@ def load_dataset():
             f"Dataset not found at {DATA_PATH}. Add obesity_data.csv inside the data folder."
         )
 
- df = pd.read_csv(DATA_PATH)
+    df = pd.read_csv(DATA_PATH)
 
     if TARGET_COLUMN not in df.columns:
         raise ValueError(
             f"Target column '{TARGET_COLUMN}' not found. Available columns: {list(df.columns)}"
         )
- return df
+
+    return df
 
 
 def encode_features(df):
@@ -40,13 +45,21 @@ def encode_features(df):
     feature_encoders = {}
     target_encoder = LabelEncoder()
 
-    y_encoded = target_encoder.fit_transform(y)
+    # Encode target column
+    y_encoded = target_encoder.fit_transform(y.astype(str))
 
+    # Encode every non-numeric feature column
     for col in X.columns:
-        if X[col].dtype == "object":
+        if not pd.api.types.is_numeric_dtype(X[col]):
             encoder = LabelEncoder()
             X[col] = encoder.fit_transform(X[col].astype(str))
             feature_encoders[col] = encoder
+
+    # Final safety check
+    non_numeric_columns = X.select_dtypes(exclude=["number"]).columns.tolist()
+    if len(non_numeric_columns) > 0:
+        raise ValueError(f"These columns are still non-numeric: {non_numeric_columns}")
+
     return X, y_encoded, feature_encoders, target_encoder
 
 
@@ -61,7 +74,8 @@ def split_and_scale(X, y):
         random_state=42,
         stratify=y
     )
-   X_val, X_test, y_val, y_test = train_test_split(
+
+    X_val, X_test, y_val, y_test = train_test_split(
         X_temp,
         y_temp,
         test_size=0.50,
@@ -70,6 +84,7 @@ def split_and_scale(X, y):
     )
 
     return X_train, X_val, X_test, y_train, y_val, y_test, scaler
+
 
 def save_outputs(
     X_train,
@@ -92,7 +107,7 @@ def save_outputs(
     joblib.dump(y_val, f"{ARTIFACT_DATA_DIR}/y_val.pkl")
     joblib.dump(y_test, f"{ARTIFACT_DATA_DIR}/y_test.pkl")
 
- joblib.dump(scaler, f"{ARTIFACT_PREPROCESSING_DIR}/scaler.pkl")
+    joblib.dump(scaler, f"{ARTIFACT_PREPROCESSING_DIR}/scaler.pkl")
     joblib.dump(feature_encoders, f"{ARTIFACT_PREPROCESSING_DIR}/feature_encoders.pkl")
     joblib.dump(target_encoder, f"{ARTIFACT_PREPROCESSING_DIR}/target_encoder.pkl")
 
@@ -110,7 +125,7 @@ def save_outputs(
         "class_distribution": df[TARGET_COLUMN].value_counts().to_dict()
     }
 
- with open(f"{METRICS_DIR}/preprocessing_summary.json", "w") as f:
+    with open(f"{METRICS_DIR}/preprocessing_summary.json", "w") as f:
         json.dump(summary, f, indent=4)
 
     with open(f"{METRICS_DIR}/preprocessing_summary.txt", "w") as f:
@@ -126,7 +141,7 @@ def main():
     create_directories()
     df = load_dataset()
 
-X, y, feature_encoders, target_encoder = encode_features(df)
+    X, y, feature_encoders, target_encoder = encode_features(df)
     X_train, X_val, X_test, y_train, y_val, y_test, scaler = split_and_scale(X, y)
 
     save_outputs(
@@ -145,6 +160,6 @@ X, y, feature_encoders, target_encoder = encode_features(df)
 
     print("Preprocessing completed successfully.")
 
-    if __name__ == "__main__":
+
+if __name__ == "__main__":
     main()
-    
