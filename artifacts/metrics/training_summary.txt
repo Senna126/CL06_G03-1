@@ -1,0 +1,16 @@
+Training Summary
+================
+Best model: RandomForest
+
+RandomForest
+  accuracy: 0.9744
+  precision_macro: 0.9761
+  recall_macro: 0.9730
+  f1_macro: 0.9731
+
+DecisionTree
+  accuracy: 0.9585
+  precision_macro: 0.9576
+  recall_macro: 0.9563
+  f1_macro: 0.9560
+
