@@ -1,34 +1,61 @@
-name: Train ML Model
+name: Automated Model Training and Monitoring
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+    paths:
+      - "data/**"
+      - "src/**"
+      - "requirements.txt"
+      - "dvc.yaml"
+      - ".github/workflows/train.yml"
+
   workflow_dispatch:
 
 jobs:
-  train:
+  train-and-monitor:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Create output folders
+        run: |
+          mkdir -p artifacts/data
+          mkdir -p artifacts/preprocessing
+          mkdir -p artifacts/models
+          mkdir -p artifacts/metrics
+          mkdir -p artifacts/plots
+          mkdir -p reports
+
+      - name: Run preprocessing
+        run: python src/preprocess.py
 
       - name: Train model
-        run: python model.py
+        run: python src/model.py
 
-      - name: Upload results
+      - name: Evaluate model
+        run: python src/evaluate.py
+
+      - name: Run monitoring
+        run: python src/monitor.py
+
+      - name: Upload generated artifacts and reports
         uses: actions/upload-artifact@v4
         with:
-          name: model-results
+          name: obesity-model-pipeline-results
           path: |
-            model_results.png
-            training_history.png
-            metrics.txt
+            artifacts/
+            reports/
