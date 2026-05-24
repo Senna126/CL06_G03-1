@@ -1,0 +1,33 @@
+{
+    "method": "Kolmogorov-Smirnov test",
+    "drift_threshold": "p_value < 0.05",
+    "drift_detected": false,
+    "features_checked": [
+        "Age",
+        "Height",
+        "Weight",
+        "BMI"
+    ],
+    "results": {
+        "Age": {
+            "ks_statistic": 0.024302551250805778,
+            "p_value": 0.9827636291547003,
+            "drift_detected": false
+        },
+        "Height": {
+            "ks_statistic": 0.029209023772836067,
+            "p_value": 0.9177988080844205,
+            "drift_detected": false
+        },
+        "Weight": {
+            "ks_statistic": 0.03469002469323056,
+            "p_value": 0.7817426887262435,
+            "drift_detected": false
+        },
+        "BMI": {
+            "ks_statistic": 0.0313221392220196,
+            "p_value": 0.8724124423385384,
+            "drift_detected": false
+        }
+    }
+}
